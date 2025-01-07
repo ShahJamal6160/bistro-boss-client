@@ -4,9 +4,12 @@ import { useForm } from "react-hook-form";
 import { AuthContext } from "../../provider/AuthProvider";
 import { Link, Navigate, useNavigate } from "react-router-dom";
 import Swal from "sweetalert2";
+import useAxiosPublic from "../../Hooks/useAxiosPublic";
+import SocialLogin from "../../Components/SocialLogin";
 
 
 const SignInUp = () => {
+    const axiosPublic = useAxiosPublic();
     const { createUser, updateUserProfile } = useContext(AuthContext);
     const navigate = useNavigate();
 
@@ -20,16 +23,28 @@ const SignInUp = () => {
                 console.log(loggedUser);
                 updateUserProfile(data.name, data.photoUrl)
                     .then(() => {
-                        console.log('user profile info update')
-                        reset();
-                        Swal.fire({
-                            position: "top-end",
-                            icon: "success",
-                            title: "User Created Successfully.",
-                            showConfirmButton: false,
-                            timer: 1500
-                        });
-                        navigate('/')
+                        // console.log('user profile info update')
+                        // create user entry in the database
+                        const userInfo = {
+                            name: data.name,
+                            email: data.email
+                        }
+                        axiosPublic.post('/users', userInfo)
+                            .then(res => {
+                                if (res.data.insertedId) {
+                                    console.log('user added to the database')
+                                    reset();
+                                    Swal.fire({
+                                        position: "top-end",
+                                        icon: "success",
+                                        title: "User Created Successfully.",
+                                        showConfirmButton: false,
+                                        timer: 1500
+                                    });
+                                    navigate('/')
+                                }
+                            })
+
                     })
                     .catch(error => console.log(error))
             })
@@ -100,7 +115,8 @@ const SignInUp = () => {
                                 {/* <button className="btn btn-primary">SignUP</button> */}
                             </div>
                         </form>
-                        <p><small>Already Have an Account <Link to='/login'>Login</Link></small></p>
+                        <p className="px-6"><small>Already Have an Account <Link to='/login'>Login</Link></small></p>
+                        <SocialLogin></SocialLogin>
                     </div>
                 </div>
             </div>
